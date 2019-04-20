@@ -1,0 +1,66 @@
+---
+title: "MTCars_Regression"
+author: "Dustin Lanning"
+date: "April 20, 2019"
+output: 
+  html_document: 
+    fig_caption: yes
+    keep_md: yes
+---
+
+##Overview
+
+The purpose of this report is to determine whether a car's transmission, automatic or manual, has an impact on the gasoline miles per gallon. To perform the analysis, we are using the mtcars dataset. The dataset was extracted from the 1974 Motor Trend magazine and contains the fuel consumption and 10 other aspects of automobile design and performance for 32 automobiles.
+
+##Prepare the Data
+
+Load the dataset mtcars and prepare the data for further analysis.
+
+```{r}
+data("mtcars")
+mtcars$am<-factor(mtcars$am, levels = c(0,1), labels = c("Automatic", "Manual"))
+```
+
+##Analysis
+
+We will first look at the coefficients of a simple linear model using mpg as the outcome and am as the predictor.
+
+```{r}
+fitAm<-lm(mpg ~ am, mtcars)
+summary(fitAm)$coef
+summary(fitAm)$r.squared
+```
+
+Vehicles in the dataset with a manual transmission averaged `r summary(fitAm)$coef[2]` more mpg than automatic transmissions which averaged `r summary(fitAm)$coef[1]`. Based on the P-Value above, a significant relationship does exist between mpg and transmission type. However, only approximately 35% of the variance can be explained by transmission type alone. Using the correlation plot from the appendix, we selected additional predictors.
+
+```{r}
+fit2pred<-update(fitAm, mpg ~ am + drat)
+fit3pred<-update(fitAm, mpg ~ am + drat + qsec)
+fit4pred<-update(fitAm, mpg ~ am + drat + qsec + wt)
+anova(fitAm, fit2pred, fit3pred, fit4pred)
+```
+
+Based on the ANOVA analysis, there are additional predictors of mpg.
+
+```{r}
+summary(fit4pred)$coef
+summary(fit4pred)$r.squared
+```
+
+##Conclusion
+
+The R-squared value of 0.8509 suggests that approximately 85% of the variance is explained by the multivariable model, which includes transmission, rear axle ratio, quarter mile time, and weight as predictors of miles per gallon. The P-values of quarter mile time and weight suggest that they are confounding variables in the relationship between transmission type and miles per gallon. 
+
+##Appendix
+
+```{r}
+require(GGally)
+require(ggplot2)
+ggpairs(mtcars[, c(1:9)], lower = list(continuous = "smooth"))
+```
+
+
+```{r}
+par(mfrow = c(2, 2))
+plot(fit4pred)
+```
